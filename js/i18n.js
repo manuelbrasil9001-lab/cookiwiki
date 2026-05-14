@@ -6,13 +6,34 @@
 // BUG FIX: pt usaba 🇧🇷 igual que Brasil en el menú.
 // Español → 🇪🇸, Portugués → 🇵🇹
 const LANG_META = {
-  es: { flag: '🇪🇸', label: 'Español',    code: 'ES' },
-  en: { flag: '🇺🇸', label: 'English',    code: 'EN' },
-  pt: { flag: '🇵🇹', label: 'Português',  code: 'PT' },
-  fr: { flag: '🇫🇷', label: 'Français',   code: 'FR' },
-  it: { flag: '🇮🇹', label: 'Italiano',   code: 'IT' },
-  de: { flag: '🇩🇪', label: 'Deutsch',    code: 'DE' },
-  ja: { flag: '🇯🇵', label: '日本語',      code: 'JA' },
+  es: { flag: '🇪🇸', label: 'Español',    code: 'ES'     translating:'🌐 Traduciendo receta...',
+    translate_cached:'✅ Traducción lista',
+    translate_error:'No se pudo traducir, mostrando original',
+},
+  en: { flag: '🇺🇸', label: 'English',    code: 'EN'     translating:'🌐 Translating recipe...',
+    translate_cached:'✅ Translation ready',
+    translate_error:'Could not translate, showing original',
+},
+  pt: { flag: '🇵🇹', label: 'Português',  code: 'PT'     translating:'🌐 Traduzindo receita...',
+    translate_cached:'✅ Tradução pronta',
+    translate_error:'Não foi possível traduzir, mostrando original',
+},
+  fr: { flag: '🇫🇷', label: 'Français',   code: 'FR'     translating:'🌐 Traduction en cours...',
+    translate_cached:'✅ Traduction prête',
+    translate_error:'Impossible de traduire, affichage de l\'original',
+},
+  it: { flag: '🇮🇹', label: 'Italiano',   code: 'IT'     translating:'🌐 Traduzione in corso...',
+    translate_cached:'✅ Traduzione pronta',
+    translate_error:'Impossibile tradurre, mostrando l\'originale',
+},
+  de: { flag: '🇩🇪', label: 'Deutsch',    code: 'DE'     translating:'🌐 Rezept wird übersetzt...',
+    translate_cached:'✅ Übersetzung bereit',
+    translate_error:'Übersetzung fehlgeschlagen, Original wird angezeigt',
+},
+  ja: { flag: '🇯🇵', label: '日本語',      code: 'JA'     translating:'🌐 レシピを翻訳中...',
+    translate_cached:'✅ 翻訳完了',
+    translate_error:'翻訳できませんでした。原文を表示します',
+},
 };
 
 // Legacy alias para código que usa LANG_FLAGS directamente
@@ -1121,6 +1142,7 @@ function buildLangMenu() {
 }
 
 function setLanguage(lang) {
+  document.documentElement.lang = lang;
   STATE.language = lang;
   localStorage.setItem('cookiwiki_lang', lang);
   const meta = LANG_META[lang] || LANG_META.es;
@@ -1128,7 +1150,11 @@ function setLanguage(lang) {
   document.getElementById('currentLang').textContent = meta.code;
   document.getElementById('langMenu').classList.remove('open');
   applyTranslations();
-  renderCurrentPage();
+  if (typeof currentPage !== 'undefined' && currentPage === 'recipe' && STATE.currentRecipeId) {
+    openRecipe(STATE.currentRecipeId);
+  } else {
+    renderCurrentPage();
+  }
 }
 
 function applyTranslations() {

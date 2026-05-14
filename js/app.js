@@ -238,8 +238,8 @@ function recipeCard(r) {
           <span>·</span><span>⏱ ${total} ${t('min')}</span>
           <span>·</span><span>👤 ${r.servings} ${t('servings_label')}</span>
         </div>
-        <h3>${r.name}</h3>
-        <p class="recipe-card-desc">${r.description}</p>
+        <h3>${getDisplayRecipeName(r)}</h3>
+        <p class="recipe-card-desc">${getDisplayRecipeDesc(r)}</p>
         <div class="recipe-card-footer">
           <span class="recipe-rating">★ ${r.rating?.toFixed(1) || '4.5'}</span>
           <div class="recipe-tags">${tags}</div>
@@ -299,6 +299,8 @@ function renderRecipeDetail(r) {
       <div class="recipe-detail-hero">
         <div class="recipe-detail-img">${r.photo ? `<img src="${r.photo}" alt="${r.name}">` : r.emoji}</div>
         <div class="recipe-detail-info">
+          ${STATE.language !== 'es' && getCachedTranslation(r.id, STATE.language) ? 
+            `<div class="translate-badge">🌐 ${LANG_META[STATE.language]?.label || STATE.language}</div>` : ''}
           <h1>${r.name}</h1>
           <div class="recipe-detail-meta">
             <span class="meta-chip">${country?.flag || '🌍'} ${getCountryName(r.country)}</span>
@@ -841,6 +843,22 @@ function populateSelects() {
   if (catEl) CATEGORIES.forEach(c => catEl.add(new Option(`${c.emoji} ${c.name}`, c.id)));
 }
 
+
+// ---- RECIPE DISPLAY HELPERS (translation-aware) ----
+function getDisplayRecipeName(r) {
+  const lang = STATE.language;
+  if (lang === 'es') return r.name;
+  const cached = getCachedTranslation(r.id, lang);
+  return cached?.name || r.name;
+}
+
+function getDisplayRecipeDesc(r) {
+  const lang = STATE.language;
+  if (lang === 'es') return r.description;
+  const cached = getCachedTranslation(r.id, lang);
+  return cached?.description || r.description;
+}
+
 // ============================================
 //  ADMIN PANEL
 // ============================================
@@ -1250,3 +1268,182 @@ function addCountry() {
   document.getElementById('newCountryName').value = '';
   renderAdminCountries(); showToast(t('admin_toast_country_added'));
 }
+
+// ============================================
+//  RECIPE TRANSLATION ENGINE — MyMemory API
+//  Free, no registration, no API key needed
+//  5000 chars/day free limit
+//  Caches all translations in localStorage
+// ============================================
+
+const TRANSLATION_CACHE_KEY = 'cookiwiki_translations_v2';
+let translationCache = {};
+
+// MyMemory language codes
+const MYMEMORY_LANGS = {
+  es: 'es', en: 'en', pt: 'pt',
+  fr: 'fr', it: 'it', de: 'de', ja: 'ja'
+};
+
+function loadTranslationCache() {
+  try {
+    const saved = localStorage.getItem(TRANSLATION_CACHE_KEY);
+    translationCache = saved ? JSON.parse(saved) : {};
+  } catch(e) { translationCache = {}; }
+}
+
+function saveTranslationCache() {
+  try {
+    localStorage.setItem(TRANSLATION_CACHE_KEY, JSON.stringify(translationCache));
+  } catch(e) {
+    // Storage full: remove oldest 30% of entries
+    const keys = Object.keys(translationCache);
+    if (keys.length > 150) {
+      keys.slice(0, Math.floor(keys.length * 0.3)).forEach(k => delete translationCache[k]);
+      localStorage.setItem(TRANSLATION_CACHE_KEY, JSON.stringify(translationCache));
+    }
+  }
+}
+
+function getCacheKey(recipeId, lang) {
+  return `${recipeId}_${lang}`;
+}
+
+function getCachedTranslation(recipeId, lang) {
+  return translationCache[getCacheKey(recipeId, lang)] || null;
+}
+
+function setCachedTranslation(recipeId, lang, data) {
+  translationCache[getCacheKey(recipeId, lang)] = data;
+  saveTranslationCache();
+}
+
+// Translate a single text string via MyMemory
+async function translateText(text, fromLang, toLang) {
+  if (!text || !text.trim()) return text;
+  const from = MYMEMORY_LANGS[fromLang] || 'es';
+  const to   = MYMEMORY_LANGS[toLang]   || 'en';
+  const url  = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
+  try {
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.responseStatus === 200 && data.responseData?.translatedText) {
+      return data.responseData.translatedText;
+    }
+    return text; // fallback
+  } catch(e) {
+    return text; // fallback
+  }
+}
+
+// Translate multiple texts in parallel (batch)
+async function translateBatch(texts, fromLang, toLang) {
+  const results = await Promise.all(
+    texts.map(text => translateText(text, fromLang, toLang))
+  );
+  return results;
+}
+
+// Full recipe translation using MyMemory
+async function translateRecipe(recipe, targetLang) {
+  if (targetLang === 'es') return recipe;
+
+  // Return cached if available
+  const cached = getCachedTranslation(recipe.id, targetLang);
+  if (cached) return { ...recipe, ...cached };
+
+  try {
+    // Build flat array of all texts to translate in one batch
+    const ingNames  = (recipe.ingredients || []).map(i => i.name);
+    const ingNotes  = (recipe.ingredients || []).map(i => i.note || '');
+    const stepTexts = (recipe.steps || []).map(s => s.text);
+    const stepTips  = (recipe.steps || []).map(s => s.tip || '');
+
+    const allTexts = [
+      recipe.name,
+      recipe.description,
+      recipe.tips || '',
+      ...ingNames,
+      ...ingNotes,
+      ...stepTexts,
+      ...stepTips
+    ];
+
+    // Translate all in parallel
+    const translated = await translateBatch(allTexts, 'es', targetLang);
+
+    // Unpack results
+    let idx = 0;
+    const tName        = translated[idx++];
+    const tDescription = translated[idx++];
+    const tTips        = translated[idx++];
+    const tIngNames    = ingNames.map(() => translated[idx++]);
+    const tIngNotes    = ingNotes.map(() => translated[idx++]);
+    const tStepTexts   = stepTexts.map(() => translated[idx++]);
+    const tStepTips    = stepTips.map(() => translated[idx++]);
+
+    const translatedData = {
+      name:        tName        || recipe.name,
+      description: tDescription || recipe.description,
+      tips:        tTips        || recipe.tips,
+      ingredients: (recipe.ingredients || []).map((ing, i) => ({
+        ...ing,
+        name: tIngNames[i] || ing.name,
+        note: tIngNotes[i] !== undefined ? tIngNotes[i] : ing.note,
+      })),
+      steps: (recipe.steps || []).map((s, i) => ({
+        ...s,
+        text: tStepTexts[i] || s.text,
+        tip:  tStepTips[i]  !== undefined ? tStepTips[i] : s.tip,
+      }))
+    };
+
+    setCachedTranslation(recipe.id, targetLang, translatedData);
+    return { ...recipe, ...translatedData };
+
+  } catch(err) {
+    console.warn('MyMemory translation failed, using original:', err);
+    return recipe;
+  }
+}
+
+// Loading skeleton shown while translating
+function showRecipeLoadingSkeleton() {
+  document.getElementById('recipeDetailContent').innerHTML = `
+    <div class="recipe-detail">
+      <div class="translate-loading">
+        <div class="translate-spinner">🌐</div>
+        <p>${t('translating')}</p>
+      </div>
+    </div>`;
+}
+
+// Open a recipe — translates if needed
+async function openRecipe(id) {
+  STATE.currentRecipeId = id;
+  const r = STATE.recipes.find(x => x.id === id);
+  if (!r) return;
+  r.views = (r.views || 0) + 1;
+  saveRecipes();
+
+  const lang = STATE.language;
+
+  // Navigate to recipe page first
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-recipe');
+  if (target) { target.classList.add('active'); currentPage = 'recipe'; }
+  window.scrollTo(0, 0);
+
+  // If not cached, show skeleton while translating
+  if (lang !== 'es' && !getCachedTranslation(id, lang)) {
+    showRecipeLoadingSkeleton();
+    const translated = await translateRecipe(r, lang);
+    renderRecipeDetail(translated);
+  } else {
+    const translated = await translateRecipe(r, lang);
+    renderRecipeDetail(translated);
+  }
+}
+
+// Init translation cache
+loadTranslationCache();
