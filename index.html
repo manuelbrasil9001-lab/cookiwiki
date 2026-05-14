@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CookiWiki — Wiki Mundial de Cocina</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=Crimson+Pro:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- SITE BANNER -->
+<div id="siteBanner" class="site-banner hidden">
+  <span id="bannerText"></span>
+  <button onclick="document.getElementById('siteBanner').classList.add('hidden')" class="banner-close">✕</button>
+</div>
+
+<!-- HEADER -->
+<header class="header" id="header">
+  <div class="header-inner">
+    <a href="#" class="logo" onclick="showPage('home')">
+      <span class="logo-icon">🍳</span>
+      <span class="logo-text">Cooki<em>Wiki</em></span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#" onclick="showPage('home')" data-i18n="nav_home">Inicio</a>
+      <a href="#" onclick="showPage('explore')" data-i18n="nav_explore">Explorar</a>
+      <a href="#" onclick="showPage('countries')" data-i18n="nav_countries">Por País</a>
+      <a href="#" onclick="showPage('categories')" data-i18n="nav_categories">Categorías</a>
+    </nav>
+    <div class="header-actions">
+      <!-- Language Selector -->
+      <div class="lang-selector" id="langSelector">
+        <button class="lang-btn" onclick="toggleLangMenu()">
+          <span id="currentFlag">🌐</span>
+          <span id="currentLang">ES</span>
+          <span class="chevron">▾</span>
+        </button>
+        <div class="lang-menu" id="langMenu">
+          <!-- Populated by buildLangMenu() on init -->
+        </div>
+      </div>
+      <!-- Theme Toggle -->
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <span id="themeIcon">🌙</span>
+      </button>
+      <!-- Auth Buttons -->
+      <div id="authArea">
+        <button class="btn-ghost" onclick="showModal('login')" data-i18n="btn_login">Ingresar</button>
+        <button class="btn-primary" onclick="showModal('register')" data-i18n="btn_register">Registrarse</button>
+      </div>
+      <div id="userArea" class="user-area hidden">
+        <button class="btn-accent" onclick="showModal('addRecipe')" data-i18n="btn_add_recipe">+ Receta</button>
+        <div class="avatar-menu">
+          <button class="avatar-btn" onclick="toggleUserMenu()" id="avatarBtn">
+            <span id="userAvatar">👤</span>
+            <span id="userName">Usuario</span>
+          </button>
+          <div class="user-dropdown" id="userDropdown">
+            <a href="#" onclick="showPage('profile')" data-i18n="menu_profile">Mi Perfil</a>
+            <a href="#" onclick="showPage('myRecipes')" data-i18n="menu_my_recipes">Mis Recetas</a>
+            <a href="#" onclick="showPage('favorites')" data-i18n="menu_favorites">Favoritos</a>
+            <a href="#" id="adminMenuLink" class="hidden" onclick="showPage('admin')" style="color:var(--accent);font-weight:700">🛡️ Panel Admin</a>
+            <hr>
+            <a href="#" onclick="logout()" data-i18n="menu_logout">Cerrar Sesión</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<main id="mainContent">
+
+  <!-- HOME PAGE -->
+  <div id="page-home" class="page active">
+    <section class="hero">
+      <div class="hero-bg">
+        <div class="food-float f1">🍜</div>
+        <div class="food-float f2">🥗</div>
+        <div class="food-float f3">🍕</div>
+        <div class="food-float f4">🍣</div>
+        <div class="food-float f5">🥘</div>
+        <div class="food-float f6">🫕</div>
+      </div>
+      <div class="hero-content">
+        <p class="hero-eyebrow" data-i18n="hero_eyebrow">La enciclopedia culinaria del mundo</p>
+        <h1 class="hero-title" data-i18n="hero_title">Sabores de <em>todos</em><br>los rincones</h1>
+        <p class="hero-desc" data-i18n="hero_desc">Descubre, comparte y aprende recetas auténticas de más de 50 países. Una comunidad apasionada por la gastronomía mundial.</p>
+        <div class="hero-search">
+          <input type="text" id="heroSearch" placeholder="Buscar recetas, ingredientes, países..." data-i18n-placeholder="search_placeholder" onkeyup="liveSearch(this.value)" />
+          <button onclick="doSearch()" data-i18n="btn_search">Buscar</button>
+        </div>
+        <div id="searchSuggestions" class="search-suggestions hidden"></div>
+        <div class="hero-stats">
+          <div class="stat"><strong id="statRecipes">247</strong><span data-i18n="stat_recipes">recetas</span></div>
+          <div class="stat"><strong>52</strong><span data-i18n="stat_countries">países</span></div>
+          <div class="stat"><strong id="statUsers">1.2k</strong><span data-i18n="stat_chefs">chefs</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURED RECIPES -->
+    <section class="section">
+      <div class="section-header">
+        <h2 data-i18n="featured_title">Recetas Destacadas</h2>
+        <a href="#" onclick="showPage('explore')" class="see-all" data-i18n="see_all">Ver todas →</a>
+      </div>
+      <div class="recipe-grid" id="featuredGrid"></div>
+    </section>
+
+    <!-- COUNTRIES STRIP -->
+    <section class="section countries-strip-section">
+      <h2 data-i18n="explore_countries">Explorar por País</h2>
+      <div class="countries-strip" id="countriesStrip"></div>
+    </section>
+
+    <!-- CATEGORIES -->
+    <section class="section">
+      <h2 data-i18n="explore_categories">Explorar por Categoría</h2>
+      <div class="categories-grid" id="categoriesGrid"></div>
+    </section>
+
+    <!-- TRENDING -->
+    <section class="section trending-section">
+      <h2 data-i18n="trending">🔥 Tendencias esta semana</h2>
+      <div class="trending-list" id="trendingList"></div>
+    </section>
+  </div>
+
+  <!-- EXPLORE PAGE -->
+  <div id="page-explore" class="page">
+    <div class="page-header-bar">
+      <h1 data-i18n="nav_explore">Explorar Recetas</h1>
+    </div>
+    <div class="explore-layout">
+      <aside class="filters-panel">
+        <h3 data-i18n="filter_title">Filtros</h3>
+        <div class="filter-group">
+          <label data-i18n="filter_country">País</label>
+          <select id="filterCountry" onchange="applyFilters()">
+            <option value="" data-i18n="filter_all">Todos</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label data-i18n="filter_category">Categoría</label>
+          <select id="filterCategory" onchange="applyFilters()">
+            <option value="" data-i18n="filter_all">Todas</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label data-i18n="filter_difficulty">Dificultad</label>
+          <select id="filterDifficulty" onchange="applyFilters()">
+            <option value="" data-i18n="filter_all">Todas</option>
+            <option value="easy" data-i18n="diff_easy">Fácil</option>
+            <option value="medium" data-i18n="diff_medium">Medio</option>
+            <option value="hard" data-i18n="diff_hard">Difícil</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label data-i18n="filter_time">Tiempo máx (min)</label>
+          <input type="range" id="filterTime" min="15" max="240" value="240" oninput="updateTimeLabel(this.value); applyFilters()">
+          <span id="timeLabel">240 min</span>
+        </div>
+        <div class="filter-group">
+          <label data-i18n="filter_diet">Dieta</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" value="vegetarian" onchange="applyFilters()"> <span data-i18n="diet_veg">Vegetariana</span></label>
+            <label><input type="checkbox" value="vegan" onchange="applyFilters()"> <span data-i18n="diet_vegan">Vegana</span></label>
+            <label><input type="checkbox" value="glutenfree" onchange="applyFilters()"> <span data-i18n="diet_gf">Sin Gluten</span></label>
+          </div>
+        </div>
+        <button class="btn-ghost full-width" onclick="clearFilters()" data-i18n="clear_filters">Limpiar filtros</button>
+      </aside>
+      <div class="explore-main">
+        <div class="explore-toolbar">
+          <input type="text" id="exploreSearch" placeholder="Buscar..." data-i18n-placeholder="search_placeholder" oninput="applyFilters()">
+          <select id="sortBy" onchange="applyFilters()">
+            <option value="newest" data-i18n="sort_newest">Más recientes</option>
+            <option value="popular" data-i18n="sort_popular">Más populares</option>
+            <option value="rating" data-i18n="sort_rating">Mejor valoradas</option>
+            <option value="time" data-i18n="sort_time">Menor tiempo</option>
+          </select>
+        </div>
+        <div class="recipe-grid" id="exploreGrid"></div>
+        <p id="noResults" class="no-results hidden" data-i18n="no_results">No se encontraron recetas con estos filtros.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- COUNTRIES PAGE -->
+  <div id="page-countries" class="page">
+    <div class="page-header-bar">
+      <h1 data-i18n="nav_countries">Recetas por País</h1>
+    </div>
+    <div class="world-map-countries" id="worldCountriesGrid"></div>
+  </div>
+
+  <!-- CATEGORIES PAGE -->
+  <div id="page-categories" class="page">
+    <div class="page-header-bar">
+      <h1 data-i18n="nav_categories">Categorías</h1>
+    </div>
+    <div class="categories-big-grid" id="bigCategoriesGrid"></div>
+  </div>
+
+  <!-- RECIPE DETAIL PAGE -->
+  <div id="page-recipe" class="page">
+    <div id="recipeDetailContent"></div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div id="page-profile" class="page">
+    <div class="profile-page" id="profileContent"></div>
+  </div>
+
+  <!-- MY RECIPES PAGE -->
+  <div id="page-myRecipes" class="page">
+    <div class="page-header-bar">
+      <h1 data-i18n="menu_my_recipes">Mis Recetas</h1>
+      <button class="btn-primary" onclick="showModal('addRecipe')" data-i18n="btn_add_recipe">+ Nueva Receta</button>
+    </div>
+    <div class="recipe-grid" id="myRecipesGrid"></div>
+    <p id="noMyRecipes" class="no-results hidden" data-i18n="no_my_recipes">Aún no has subido recetas.</p>
+  </div>
+
+  <!-- FAVORITES PAGE -->
+  <div id="page-favorites" class="page">
+    <div class="page-header-bar">
+      <h1 data-i18n="menu_favorites">Mis Favoritos</h1>
+    </div>
+    <div class="recipe-grid" id="favoritesGrid"></div>
+    <p id="noFavorites" class="no-results hidden" data-i18n="no_favorites">No tienes recetas guardadas.</p>
+  </div>
+
+  <!-- ABOUT PAGE -->
+  <div id="page-about" class="page">
+    <div class="static-page-hero">
+      <div class="static-page-hero-icon">🍳</div>
+      <h1 data-i18n="about_title">Acerca de CookiWiki</h1>
+      <p data-i18n="about_subtitle">La enciclopedia culinaria creada por y para amantes de la cocina</p>
+    </div>
+    <div class="static-page-body">
+
+      <div class="static-section">
+        <h2 data-i18n="about_mission_title">🌍 Nuestra Misión</h2>
+        <p data-i18n="about_mission_text">CookiWiki nació con una idea simple pero poderosa: reunir en un solo lugar las recetas auténticas de cada rincón del mundo, preservando las tradiciones culinarias y permitiendo que cualquier persona — sin importar dónde viva — pueda descubrir, aprender y compartir gastronomía genuina.</p>
+      </div>
+
+      <div class="static-section">
+        <h2 data-i18n="about_story_title">📖 Nuestra Historia</h2>
+        <p data-i18n="about_story_text">Fundada en 2024 por un equipo de apasionados de la cocina y la tecnología, CookiWiki comenzó como un pequeño proyecto personal para documentar recetas familiares. Rápidamente creció hasta convertirse en una comunidad global donde chefs profesionales, cocineros caseros y amateurs comparten su amor por la gastronomía.</p>
+        <p data-i18n="about_story_text2" style="margin-top:1rem">Hoy contamos con más de 1.200 miembros activos, recetas de más de 50 países y una comunidad que crece cada día.</p>
+      </div>
+
+      <div class="static-values-grid">
+        <div class="static-value-card">
+          <span class="value-icon">🤝</span>
+          <h3 data-i18n="about_val1_title">Comunidad</h3>
+          <p data-i18n="about_val1_text">Creemos en el poder de compartir. Cada receta publicada es un regalo a la comunidad global.</p>
+        </div>
+        <div class="static-value-card">
+          <span class="value-icon">🌱</span>
+          <h3 data-i18n="about_val2_title">Autenticidad</h3>
+          <p data-i18n="about_val2_text">Valoramos las recetas tradicionales y auténticas, sin alteraciones que traicionen su origen cultural.</p>
+        </div>
+        <div class="static-value-card">
+          <span class="value-icon">🌐</span>
+          <h3 data-i18n="about_val3_title">Inclusión</h3>
+          <p data-i18n="about_val3_text">Disponible en 7 idiomas y accesible para todos. La cocina no tiene fronteras ni barreras.</p>
+        </div>
+        <div class="static-value-card">
+          <span class="value-icon">🔒</span>
+          <h3 data-i18n="about_val4_title">Privacidad</h3>
+          <p data-i18n="about_val4_text">Tus datos son tuyos. Nunca los vendemos ni compartimos con terceros sin tu consentimiento.</p>
+        </div>
+      </div>
+
+      <div class="static-section">
+        <h2 data-i18n="about_team_title">👨‍🍳 El Equipo</h2>
+        <div class="team-grid">
+          <div class="team-card">
+            <span class="team-avatar">👨‍💻</span>
+            <h4>Alejandro Torres</h4>
+            <p data-i18n="about_role_founder">Fundador & Desarrollador</p>
+          </div>
+          <div class="team-card">
+            <span class="team-avatar">👩‍🍳</span>
+            <h4>María González</h4>
+            <p data-i18n="about_role_culinary">Directora Culinaria</p>
+          </div>
+          <div class="team-card">
+            <span class="team-avatar">🎨</span>
+            <h4>Lucas Petit</h4>
+            <p data-i18n="about_role_design">Diseño & UX</p>
+          </div>
+          <div class="team-card">
+            <span class="team-avatar">🌍</span>
+            <h4>Yuki Tanaka</h4>
+            <p data-i18n="about_role_community">Comunidad Global</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="static-section static-cta">
+        <h2 data-i18n="about_join_title">¿Listo para unirte?</h2>
+        <p data-i18n="about_join_text">Regístrate gratis y empieza a compartir tus recetas favoritas con el mundo.</p>
+        <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap">
+          <button class="btn-primary" onclick="showModal('register')" data-i18n="btn_register">Registrarse</button>
+          <button class="btn-ghost" onclick="showPage('explore')" data-i18n="nav_explore">Explorar recetas</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PRIVACY PAGE -->
+  <div id="page-privacy" class="page">
+    <div class="static-page-hero">
+      <div class="static-page-hero-icon">🔒</div>
+      <h1 data-i18n="privacy_title">Política de Privacidad</h1>
+      <p data-i18n="privacy_updated">Última actualización: 1 de enero de 2026</p>
+    </div>
+    <div class="static-page-body">
+
+      <div class="static-toc">
+        <h3 data-i18n="toc_title">Contenido</h3>
+        <ol>
+          <li><a href="#priv-1" data-i18n="priv_toc1">Información que recopilamos</a></li>
+          <li><a href="#priv-2" data-i18n="priv_toc2">Cómo usamos tu información</a></li>
+          <li><a href="#priv-3" data-i18n="priv_toc3">Almacenamiento de datos</a></li>
+          <li><a href="#priv-4" data-i18n="priv_toc4">Cookies</a></li>
+          <li><a href="#priv-5" data-i18n="priv_toc5">Tus derechos</a></li>
+          <li><a href="#priv-6" data-i18n="priv_toc6">Seguridad</a></li>
+          <li><a href="#priv-7" data-i18n="priv_toc7">Contacto</a></li>
+        </ol>
+      </div>
+
+      <div class="static-section" id="priv-1">
+        <h2 data-i18n="priv_s1_title">1. Información que Recopilamos</h2>
+        <p data-i18n="priv_s1_intro">Al usar CookiWiki, podemos recopilar los siguientes tipos de información:</p>
+        <div class="info-block">
+          <h4 data-i18n="priv_s1_a_title">a) Información que tú nos proporcionas</h4>
+          <ul>
+            <li data-i18n="priv_s1_a1">Nombre y nombre de usuario al registrarte</li>
+            <li data-i18n="priv_s1_a2">Dirección de correo electrónico</li>
+            <li data-i18n="priv_s1_a3">País de origen (opcional)</li>
+            <li data-i18n="priv_s1_a4">Biografía personal (opcional)</li>
+            <li data-i18n="priv_s1_a5">Recetas, fotos e ingredientes que publicas</li>
+            <li data-i18n="priv_s1_a6">Comentarios y calificaciones</li>
+          </ul>
+        </div>
+        <div class="info-block">
+          <h4 data-i18n="priv_s1_b_title">b) Información técnica</h4>
+          <ul>
+            <li data-i18n="priv_s1_b1">Preferencias de idioma y tema visual</li>
+            <li data-i18n="priv_s1_b2">Recetas marcadas como favoritas</li>
+            <li data-i18n="priv_s1_b3">Datos almacenados localmente en tu navegador (localStorage)</li>
+          </ul>
+        </div>
+        <div class="privacy-highlight">
+          <span>💡</span>
+          <p data-i18n="priv_s1_note">CookiWiki almacena todos los datos <strong>localmente en tu dispositivo</strong> mediante localStorage. No transmitimos tu información a servidores externos en esta versión.</p>
+        </div>
+      </div>
+
+      <div class="static-section" id="priv-2">
+        <h2 data-i18n="priv_s2_title">2. Cómo Usamos tu Información</h2>
+        <p data-i18n="priv_s2_intro">Utilizamos la información recopilada para:</p>
+        <ul class="styled-list">
+          <li data-i18n="priv_s2_1">✅ Crear y gestionar tu cuenta de usuario</li>
+          <li data-i18n="priv_s2_2">✅ Mostrar tus recetas publicadas y favoritos</li>
+          <li data-i18n="priv_s2_3">✅ Personalizar la experiencia según tu idioma preferido</li>
+          <li data-i18n="priv_s2_4">✅ Permitir que otros usuarios vean tus recetas y calificaciones</li>
+          <li data-i18n="priv_s2_5">✅ Mejorar la funcionalidad de la plataforma</li>
+          <li data-i18n="priv_s2_6">❌ Nunca vendemos tu información a terceros</li>
+          <li data-i18n="priv_s2_7">❌ Nunca usamos tu información para publicidad</li>
+        </ul>
+      </div>
+
+      <div class="static-section" id="priv-3">
+        <h2 data-i18n="priv_s3_title">3. Almacenamiento de Datos</h2>
+        <p data-i18n="priv_s3_text">Todos los datos de CookiWiki se guardan en el <strong>localStorage</strong> de tu navegador. Esto significa que:</p>
+        <ul class="styled-list">
+          <li data-i18n="priv_s3_1">📱 Tus datos permanecen en tu dispositivo</li>
+          <li data-i18n="priv_s3_2">🔄 Se sincronizan solo dentro del mismo navegador</li>
+          <li data-i18n="priv_s3_3">🗑️ Al limpiar el navegador, los datos se eliminan</li>
+          <li data-i18n="priv_s3_4">🔐 Nadie más puede acceder a ellos salvo tú</li>
+        </ul>
+      </div>
+
+      <div class="static-section" id="priv-4">
+        <h2 data-i18n="priv_s4_title">4. Cookies y Almacenamiento Local</h2>
+        <p data-i18n="priv_s4_text">CookiWiki utiliza <strong>localStorage</strong> (no cookies tradicionales) para guardar:</p>
+        <div class="cookie-table">
+          <div class="cookie-row cookie-header">
+            <span data-i18n="cookie_col_name">Nombre</span>
+            <span data-i18n="cookie_col_purpose">Propósito</span>
+            <span data-i18n="cookie_col_duration">Duración</span>
+          </div>
+          <div class="cookie-row">
+            <span><code>cookiwiki_user</code></span>
+            <span data-i18n="cookie_user">Sesión del usuario activo</span>
+            <span data-i18n="cookie_persistent">Persistente</span>
+          </div>
+          <div class="cookie-row">
+            <span><code>cookiwiki_recipes</code></span>
+            <span data-i18n="cookie_recipes">Recetas publicadas</span>
+            <span data-i18n="cookie_persistent">Persistente</span>
+          </div>
+          <div class="cookie-row">
+            <span><code>cookiwiki_lang</code></span>
+            <span data-i18n="cookie_lang">Preferencia de idioma</span>
+            <span data-i18n="cookie_persistent">Persistente</span>
+          </div>
+          <div class="cookie-row">
+            <span><code>cookiwiki_theme</code></span>
+            <span data-i18n="cookie_theme">Tema claro/oscuro</span>
+            <span data-i18n="cookie_persistent">Persistente</span>
+          </div>
+          <div class="cookie-row">
+            <span><code>cookiwiki_favorites</code></span>
+            <span data-i18n="cookie_favs">Recetas favoritas</span>
+            <span data-i18n="cookie_persistent">Persistente</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="static-section" id="priv-5">
+        <h2 data-i18n="priv_s5_title">5. Tus Derechos</h2>
+        <p data-i18n="priv_s5_intro">Como usuario de CookiWiki, tienes derecho a:</p>
+        <div class="rights-grid">
+          <div class="right-card">
+            <span>👁️</span>
+            <h4 data-i18n="right1_title">Acceso</h4>
+            <p data-i18n="right1_text">Ver todos los datos que has proporcionado en tu perfil.</p>
+          </div>
+          <div class="right-card">
+            <span>✏️</span>
+            <h4 data-i18n="right2_title">Rectificación</h4>
+            <p data-i18n="right2_text">Modificar o corregir tu información en cualquier momento.</p>
+          </div>
+          <div class="right-card">
+            <span>🗑️</span>
+            <h4 data-i18n="right3_title">Eliminación</h4>
+            <p data-i18n="right3_text">Limpiar tu localStorage elimina todos tus datos permanentemente.</p>
+          </div>
+          <div class="right-card">
+            <span>🚫</span>
+            <h4 data-i18n="right4_title">Oposición</h4>
+            <p data-i18n="right4_text">Puedes dejar de usar el servicio en cualquier momento sin consecuencias.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="static-section" id="priv-6">
+        <h2 data-i18n="priv_s6_title">6. Seguridad</h2>
+        <p data-i18n="priv_s6_text">Tomamos la seguridad en serio. Aunque los datos se almacenan localmente, recomendamos no usar CookiWiki en dispositivos compartidos si deseas mantener tu información privada. Las contraseñas son almacenadas en el localStorage del navegador; te recomendamos usar contraseñas únicas.</p>
+      </div>
+
+      <div class="static-section" id="priv-7">
+        <h2 data-i18n="priv_s7_title">7. Contacto</h2>
+        <p data-i18n="priv_s7_text">Si tienes preguntas sobre esta política de privacidad, contáctanos en:</p>
+        <div class="contact-info-box">
+          <p>📧 <strong>privacidad@cookiwiki.com</strong></p>
+          <p>🌐 <strong>cookiwiki.com/privacidad</strong></p>
+        </div>
+        <p data-i18n="priv_s7_changes" style="margin-top:1rem">Nos reservamos el derecho de actualizar esta política. Los cambios serán notificados en la plataforma con al menos 15 días de anticipación.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TERMS PAGE -->
+  <div id="page-terms" class="page">
+    <div class="static-page-hero">
+      <div class="static-page-hero-icon">📋</div>
+      <h1 data-i18n="terms_title">Términos y Condiciones</h1>
+      <p data-i18n="terms_updated">Última actualización: 1 de enero de 2026</p>
+    </div>
+    <div class="static-page-body">
+
+      <div class="static-toc">
+        <h3 data-i18n="toc_title">Contenido</h3>
+        <ol>
+          <li><a href="#terms-1" data-i18n="terms_toc1">Aceptación de términos</a></li>
+          <li><a href="#terms-2" data-i18n="terms_toc2">Uso del servicio</a></li>
+          <li><a href="#terms-3" data-i18n="terms_toc3">Cuentas de usuario</a></li>
+          <li><a href="#terms-4" data-i18n="terms_toc4">Contenido publicado</a></li>
+          <li><a href="#terms-5" data-i18n="terms_toc5">Propiedad intelectual</a></li>
+          <li><a href="#terms-6" data-i18n="terms_toc6">Conducta del usuario</a></li>
+          <li><a href="#terms-7" data-i18n="terms_toc7">Limitación de responsabilidad</a></li>
+          <li><a href="#terms-8" data-i18n="terms_toc8">Modificaciones</a></li>
+          <li><a href="#terms-9" data-i18n="terms_toc9">Ley aplicable</a></li>
+        </ol>
+      </div>
+
+      <div class="static-section">
+        <div class="terms-intro-box">
+          <p data-i18n="terms_intro">Por favor lee estos Términos y Condiciones detenidamente antes de usar CookiWiki. Al acceder o usar el servicio, confirmas que has leído, entendido y aceptado estos términos.</p>
+        </div>
+      </div>
+
+      <div class="static-section" id="terms-1">
+        <h2 data-i18n="terms_s1_title">1. Aceptación de Términos</h2>
+        <p data-i18n="terms_s1_text">Al acceder a CookiWiki y utilizarlo, aceptas estar sujeto a estos Términos y Condiciones y a nuestra Política de Privacidad. Si no estás de acuerdo con alguno de estos términos, por favor no utilices el servicio.</p>
+        <p data-i18n="terms_s1_age" style="margin-top:0.75rem">Debes tener al menos <strong>13 años</strong> para usar CookiWiki. Si eres menor de 18 años, debes contar con el consentimiento de tus padres o tutores legales.</p>
+      </div>
+
+      <div class="static-section" id="terms-2">
+        <h2 data-i18n="terms_s2_title">2. Uso del Servicio</h2>
+        <p data-i18n="terms_s2_intro">CookiWiki te otorga una licencia limitada, no exclusiva y no transferible para:</p>
+        <ul class="styled-list">
+          <li data-i18n="terms_s2_1">✅ Acceder y navegar el contenido de la plataforma</li>
+          <li data-i18n="terms_s2_2">✅ Crear una cuenta personal</li>
+          <li data-i18n="terms_s2_3">✅ Publicar recetas propias o tradicionales de dominio público</li>
+          <li data-i18n="terms_s2_4">✅ Valorar y comentar recetas de otros usuarios</li>
+          <li data-i18n="terms_s2_5">✅ Guardar recetas en favoritos para uso personal</li>
+        </ul>
+      </div>
+
+      <div class="static-section" id="terms-3">
+        <h2 data-i18n="terms_s3_title">3. Cuentas de Usuario</h2>
+        <p data-i18n="terms_s3_text">Al crear una cuenta en CookiWiki:</p>
+        <ul class="styled-list">
+          <li data-i18n="terms_s3_1">📌 Eres responsable de mantener la confidencialidad de tu contraseña</li>
+          <li data-i18n="terms_s3_2">📌 Eres responsable de todas las actividades realizadas bajo tu cuenta</li>
+          <li data-i18n="terms_s3_3">📌 Debes notificarnos inmediatamente de cualquier uso no autorizado</li>
+          <li data-i18n="terms_s3_4">📌 No puedes crear cuentas falsas ni suplantar la identidad de otros</li>
+          <li data-i18n="terms_s3_5">📌 Puedes tener una sola cuenta activa por persona</li>
+        </ul>
+        <div class="privacy-highlight" style="margin-top:1rem">
+          <span>⚠️</span>
+          <p data-i18n="terms_s3_note">Nos reservamos el derecho de suspender o eliminar cuentas que violen estos términos, sin previo aviso.</p>
+        </div>
+      </div>
+
+      <div class="static-section" id="terms-4">
+        <h2 data-i18n="terms_s4_title">4. Contenido Publicado</h2>
+        <p data-i18n="terms_s4_intro">Al publicar recetas, fotos o comentarios en CookiWiki:</p>
+        <div class="info-block">
+          <h4 data-i18n="terms_s4_allowed_title">✅ Contenido permitido</h4>
+          <ul>
+            <li data-i18n="terms_s4_a1">Recetas de tu autoría o del dominio público culinario</li>
+            <li data-i18n="terms_s4_a2">Fotos tomadas por ti de los platos preparados</li>
+            <li data-i18n="terms_s4_a3">Comentarios constructivos y respetuosos</li>
+            <li data-i18n="terms_s4_a4">Variaciones y adaptaciones de recetas clásicas</li>
+          </ul>
+        </div>
+        <div class="info-block" style="border-color:var(--accent)">
+          <h4 data-i18n="terms_s4_forbidden_title">❌ Contenido prohibido</h4>
+          <ul>
+            <li data-i18n="terms_s4_f1">Recetas con derechos de autor sin permiso del titular</li>
+            <li data-i18n="terms_s4_f2">Imágenes tomadas de internet sin licencia apropiada</li>
+            <li data-i18n="terms_s4_f3">Contenido ofensivo, discriminatorio o de odio</li>
+            <li data-i18n="terms_s4_f4">Información médica o nutricional falsa o engañosa</li>
+            <li data-i18n="terms_s4_f5">Spam o contenido publicitario no autorizado</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="static-section" id="terms-5">
+        <h2 data-i18n="terms_s5_title">5. Propiedad Intelectual</h2>
+        <p data-i18n="terms_s5_text">Al publicar contenido en CookiWiki, nos otorgas una licencia mundial, no exclusiva y libre de regalías para usar, reproducir y mostrar dicho contenido dentro de la plataforma. Mantienes todos los derechos sobre tu contenido original.</p>
+        <p data-i18n="terms_s5_platform" style="margin-top:0.75rem">El diseño, código, nombre y marca de CookiWiki son propiedad exclusiva del equipo fundador. No puedes reproducir, distribuir o crear obras derivadas sin autorización expresa.</p>
+      </div>
+
+      <div class="static-section" id="terms-6">
+        <h2 data-i18n="terms_s6_title">6. Conducta del Usuario</h2>
+        <p data-i18n="terms_s6_intro">Los usuarios de CookiWiki se comprometen a:</p>
+        <ul class="styled-list">
+          <li data-i18n="terms_s6_1">🤝 Tratar a otros miembros con respeto y cordialidad</li>
+          <li data-i18n="terms_s6_2">🎯 Publicar contenido relevante relacionado con cocina y gastronomía</li>
+          <li data-i18n="terms_s6_3">🌍 Respetar las tradiciones culinarias de otras culturas</li>
+          <li data-i18n="terms_s6_4">⚖️ No plagiar recetas ni atribuirse la autoría de obras ajenas</li>
+          <li data-i18n="terms_s6_5">🔒 No intentar acceder a cuentas ajenas o comprometer la seguridad</li>
+        </ul>
+      </div>
+
+      <div class="static-section" id="terms-7">
+        <h2 data-i18n="terms_s7_title">7. Limitación de Responsabilidad</h2>
+        <p data-i18n="terms_s7_text">CookiWiki se proporciona "tal cual", sin garantías de ningún tipo. No somos responsables de:</p>
+        <ul class="styled-list">
+          <li data-i18n="terms_s7_1">⚠️ Resultados culinarios obtenidos al seguir recetas publicadas</li>
+          <li data-i18n="terms_s7_2">⚠️ Alergias o reacciones alimentarias derivadas del consumo de recetas</li>
+          <li data-i18n="terms_s7_3">⚠️ Pérdida de datos por limpieza del navegador o fallas técnicas</li>
+          <li data-i18n="terms_s7_4">⚠️ Contenido publicado por usuarios que viole derechos de terceros</li>
+        </ul>
+        <div class="privacy-highlight" style="margin-top:1rem">
+          <span>⚠️</span>
+          <p data-i18n="terms_s7_allergy">Si tienes alergias alimentarias, verifica siempre los ingredientes completos antes de preparar cualquier receta.</p>
+        </div>
+      </div>
+
+      <div class="static-section" id="terms-8">
+        <h2 data-i18n="terms_s8_title">8. Modificaciones a los Términos</h2>
+        <p data-i18n="terms_s8_text">Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor inmediatamente después de su publicación en la plataforma. El uso continuado del servicio tras los cambios implica la aceptación de los nuevos términos. Notificaremos cambios significativos con al menos 15 días de anticipación.</p>
+      </div>
+
+      <div class="static-section" id="terms-9">
+        <h2 data-i18n="terms_s9_title">9. Ley Aplicable</h2>
+        <p data-i18n="terms_s9_text">Estos términos se rigen por las leyes internacionales aplicables al comercio electrónico y la propiedad intelectual digital. Cualquier disputa será resuelta mediante arbitraje antes de recurrir a instancias judiciales.</p>
+        <div class="contact-info-box" style="margin-top:1.5rem">
+          <p>📧 <strong>legal@cookiwiki.com</strong></p>
+          <p data-i18n="terms_s9_contact">Para consultas legales sobre estos términos</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONTACT PAGE -->
+  <div id="page-contact" class="page">
+    <div class="static-page-hero">
+      <div class="static-page-hero-icon">💌</div>
+      <h1 data-i18n="contact_title">Contáctanos</h1>
+      <p data-i18n="contact_subtitle">Estamos aquí para ayudarte</p>
+    </div>
+    <div class="static-page-body">
+      <div class="contact-grid">
+        <div class="contact-form-section">
+          <h2 data-i18n="contact_form_title">Envíanos un mensaje</h2>
+          <div class="form-group">
+            <label data-i18n="label_name">Nombre</label>
+            <input type="text" id="contactName" placeholder="Tu nombre completo">
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_email">Email</label>
+            <input type="email" id="contactEmail" placeholder="tu@email.com">
+          </div>
+          <div class="form-group">
+            <label data-i18n="contact_subject">Asunto</label>
+            <select id="contactSubject">
+              <option value="general" data-i18n="contact_sub_general">Consulta general</option>
+              <option value="recipe" data-i18n="contact_sub_recipe">Problema con receta</option>
+              <option value="account" data-i18n="contact_sub_account">Mi cuenta</option>
+              <option value="report" data-i18n="contact_sub_report">Reportar contenido</option>
+              <option value="suggestion" data-i18n="contact_sub_suggest">Sugerencia</option>
+              <option value="legal" data-i18n="contact_sub_legal">Consulta legal</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="contact_message">Mensaje</label>
+            <textarea id="contactMessage" rows="5" placeholder="Escribe tu mensaje aquí..."></textarea>
+          </div>
+          <div id="contactSuccess" class="contact-success hidden">
+            <span>✅</span> <span data-i18n="contact_sent">¡Mensaje enviado! Te responderemos en 24-48 horas.</span>
+          </div>
+          <button class="btn-primary full-width" onclick="sendContact()" data-i18n="contact_send">Enviar mensaje</button>
+        </div>
+        <div class="contact-info-section">
+          <h2 data-i18n="contact_info_title">Información de contacto</h2>
+          <div class="contact-card"><span class="contact-icon">📧</span><div><h4 data-i18n="contact_email_title">Email general</h4><p>hola@cookiwiki.com</p></div></div>
+          <div class="contact-card"><span class="contact-icon">🔒</span><div><h4 data-i18n="contact_privacy_title">Privacidad</h4><p>privacidad@cookiwiki.com</p></div></div>
+          <div class="contact-card"><span class="contact-icon">⚖️</span><div><h4 data-i18n="contact_legal_title">Legal</h4><p>legal@cookiwiki.com</p></div></div>
+          <div class="contact-card"><span class="contact-icon">💡</span><div><h4 data-i18n="contact_suggest_title">Sugerencias</h4><p>ideas@cookiwiki.com</p></div></div>
+          <div class="response-time">
+            <h4 data-i18n="contact_response_title">⏱ Tiempo de respuesta</h4>
+            <p data-i18n="contact_response_text">Respondemos todos los mensajes en un plazo de <strong>24 a 48 horas hábiles</strong>.</p>
+          </div>
+          <div class="social-links">
+            <h4 data-i18n="contact_follow_title">Síguenos</h4>
+            <div class="social-grid">
+              <a href="#" class="social-btn">📸 Instagram</a>
+              <a href="#" class="social-btn">🐦 Twitter / X</a>
+              <a href="#" class="social-btn">▶️ YouTube</a>
+              <a href="#" class="social-btn">🎵 TikTok</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="faq-section">
+        <h2 data-i18n="faq_title">Preguntas Frecuentes</h2>
+        <div class="faq-list" id="faqList">
+          <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq_q1">¿Cómo publico mi primera receta?</span><span class="faq-arrow">▾</span></button><div class="faq-a hidden"><p data-i18n="faq_a1">Primero crea una cuenta gratuita. Luego haz clic en el botón "+ Receta" en la parte superior y sigue los 4 pasos del formulario.</p></div></div>
+          <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq_q2">¿Es gratis usar CookiWiki?</span><span class="faq-arrow">▾</span></button><div class="faq-a hidden"><p data-i18n="faq_a2">Sí, CookiWiki es completamente gratuito.</p></div></div>
+          <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq_q3">¿Puedo publicar recetas en mi idioma?</span><span class="faq-arrow">▾</span></button><div class="faq-a hidden"><p data-i18n="faq_a3">¡Absolutamente! Puedes publicar en el idioma que prefieras.</p></div></div>
+          <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq_q4">¿Cómo elimino mis datos?</span><span class="faq-arrow">▾</span></button><div class="faq-a hidden"><p data-i18n="faq_a4">Limpiando el localStorage desde las herramientas de desarrollo del navegador.</p></div></div>
+          <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq_q5">¿Puedo editar una receta que publiqué?</span><span class="faq-arrow">▾</span></button><div class="faq-a hidden"><p data-i18n="faq_a5">Actualmente puedes eliminarla y volver a publicarla. En próximas versiones agregaremos edición directa.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN PAGE -->
+  <div id="page-admin" class="page">
+    <div class="admin-layout">
+
+      <!-- SIDEBAR -->
+      <aside class="admin-sidebar">
+        <div class="admin-brand">
+          <span>🛡️</span>
+          <div>
+            <strong data-i18n="admin_panel">Panel Admin</strong>
+            <span>CookiWiki</span>
+          </div>
+        </div>
+        <nav class="admin-nav">
+          <button class="admin-nav-btn active" onclick="adminTab('dashboard')" id="atab-dashboard">
+            <span>📊</span> <span data-i18n="admin_dashboard">Dashboard</span>
+          </button>
+          <button class="admin-nav-btn" onclick="adminTab('recipes')" id="atab-recipes">
+            <span>🍳</span> <span data-i18n="admin_recipes">Recetas</span>
+          </button>
+          <button class="admin-nav-btn" onclick="adminTab('users')" id="atab-users">
+            <span>👥</span> <span data-i18n="admin_users">Usuarios</span>
+          </button>
+          <button class="admin-nav-btn" onclick="adminTab('reviews')" id="atab-reviews">
+            <span>⭐</span> <span data-i18n="admin_reviews">Reseñas</span>
+          </button>
+          <div class="admin-nav-sep">EDITOR DE SITIO</div>
+          <button class="admin-nav-btn" onclick="adminTab('site-general')" id="atab-site-general">
+            <span>⚙️</span> <span data-i18n="admin_site_general">General</span>
+          </button>
+          <button class="admin-nav-btn" onclick="adminTab('site-design')" id="atab-site-design">
+            <span>🎨</span> <span data-i18n="admin_site_design">Diseño & Colores</span>
+          </button>
+          <button class="admin-nav-btn" onclick="adminTab('site-content')" id="atab-site-content">
+            <span>📝</span> <span data-i18n="admin_site_content">Contenido</span>
+          </button>
+          <button class="admin-nav-btn" onclick="adminTab('site-banner')" id="atab-site-banner">
+            <span>📢</span> <span data-i18n="admin_site_banner">Banner</span>
+          </button>
+          <button class="admin-nav-btn" onclick="adminTab('site-categories')" id="atab-site-categories">
+            <span>🏷️</span> <span data-i18n="admin_site_categories">Categorías</span>
+          </button>
+          <button class="admin-nav-btn" onclick="adminTab('site-countries')" id="atab-site-countries">
+            <span>🌍</span> <span data-i18n="admin_site_countries">Países</span>
+          </button>
+        </nav>
+        <button class="admin-exit-btn" onclick="showPage('home')"><span data-i18n="admin_back">← Volver al sitio</span></button>
+      </aside>
+
+      <!-- MAIN PANEL -->
+      <div class="admin-main">
+
+        <!-- DASHBOARD TAB -->
+        <div class="admin-tab active" id="admin-tab-dashboard">
+          <div class="admin-tab-header">
+            <h2>📊 <span data-i18n="admin_dashboard">Dashboard</span></h2>
+            
+          </div>
+          <div class="admin-stats-grid" id="adminStatsGrid"></div>
+          <div class="admin-two-col">
+            <div class="admin-card">
+              <h3 data-i18n="admin_recent_recipes">🍳 Recetas recientes</h3>
+              <div id="adminRecentRecipes"></div>
+            </div>
+            <div class="admin-card">
+              <h3 data-i18n="admin_recent_users">👥 Usuarios recientes</h3>
+              <div id="adminRecentUsers"></div>
+            </div>
+          </div>
+          <div class="admin-card mt-1">
+            <h3 data-i18n="admin_category_chart">📈 Actividad por categoría</h3>
+            <div id="adminCategoryChart"></div>
+          </div>
+        </div>
+
+        <!-- RECIPES TAB -->
+        <div class="admin-tab" id="admin-tab-recipes">
+          <div class="admin-tab-header">
+            <h2>🍳 <span data-i18n="admin_recipes_tab_title">Gestión de Recetas</span></h2>
+            <div class="admin-toolbar">
+              <input type="text" id="adminRecipeSearch" data-i18n-placeholder="admin_search" placeholder="Buscar recetas..." oninput="renderAdminRecipes()">
+              <select id="adminRecipeFilter" onchange="renderAdminRecipes()">
+                <option value="" data-i18n="filter_all">Todos los países</option>
+              </select>
+              <select id="adminRecipeStatusFilter" onchange="renderAdminRecipes()">
+                <option value="" data-i18n="admin_recetas_filter_all_status">Todos los estados</option>
+                <option value="active" data-i18n="admin_status_filter_active">Activas</option>
+                <option value="flagged" data-i18n="admin_status_filter_flagged">Reportadas</option>
+                <option value="hidden" data-i18n="admin_status_filter_hidden">Ocultas</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table" id="adminRecipesTable">
+              <thead>
+                <tr>
+                  <th data-i18n="admin_col_recipe">Receta</th><th data-i18n="admin_col_country">País</th><th data-i18n="admin_col_author">Autor</th><th data-i18n="admin_col_rating">Rating</th><th data-i18n="admin_col_views">Vistas</th><th data-i18n="admin_col_status">Estado</th><th data-i18n="admin_col_actions">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="adminRecipesBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- USERS TAB -->
+        <div class="admin-tab" id="admin-tab-users">
+          <div class="admin-tab-header">
+            <h2>👥 <span data-i18n="admin_users_tab_title">Gestión de Usuarios</span></h2>
+            <div class="admin-toolbar">
+              <input type="text" id="adminUserSearch" data-i18n-placeholder="admin_search" placeholder="Buscar usuarios..." oninput="renderAdminUsers()">
+              <select id="adminUserRoleFilter" onchange="renderAdminUsers()">
+                <option value="" data-i18n="filter_all">Todos los roles</option>
+                <option value="admin">Admin</option>
+                <option value="moderator">Moderador</option>
+                <option value="user">Usuario</option>
+                <option value="banned">Baneado</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th data-i18n="admin_col_user">Usuario</th><th data-i18n="admin_col_email">Email</th><th>País</th><th data-i18n="admin_col_role">Rol</th><th data-i18n="admin_col_joined">Registro</th><th data-i18n="admin_col_recipes">Recetas</th><th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="adminUsersBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- REVIEWS TAB -->
+        <div class="admin-tab" id="admin-tab-reviews">
+          <div class="admin-tab-header">
+            <h2>⭐ <span data-i18n="admin_reviews_tab_title">Moderación de Reseñas</span></h2>
+            <p data-i18n="admin_reviews_tab_desc">Gestiona las reseñas y comentarios publicados</p>
+          </div>
+          <div id="adminReviewsList"></div>
+        </div>
+
+        <!-- SITE GENERAL TAB -->
+        <div class="admin-tab" id="admin-tab-site-general">
+          <div class="admin-tab-header">
+            <h2>⚙️ <span data-i18n="admin_general_tab_title">Configuración General</span></h2>
+            <p data-i18n="admin_general_tab_desc">Ajustes globales del sitio</p>
+          </div>
+          <div class="admin-card">
+            <div class="admin-form-grid">
+              <div class="admin-form-group">
+                <label data-i18n="admin_cfg_sitename">Nombre del sitio</label>
+                <input type="text" id="cfg-siteName">
+              </div>
+              <div class="admin-form-group">
+                <label data-i18n="admin_cfg_email">Email de contacto</label>
+                <input type="email" id="cfg-contactEmail">
+              </div>
+              <div class="admin-form-group full">
+                <label data-i18n="admin_cfg_tagline">Eslogan</label>
+                <input type="text" id="cfg-tagline">
+              </div>
+            </div>
+            <div class="admin-toggles">
+              <div class="admin-toggle-row">
+                <div>
+                  <strong data-i18n="admin_toggle_registration">Permitir nuevos registros</strong>
+                  <p data-i18n="admin_toggle_registration_desc">Los usuarios pueden crear cuentas nuevas</p>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="cfg-allowRegistration">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="admin-toggle-row">
+                <div>
+                  <strong data-i18n="admin_toggle_upload">Permitir subir recetas</strong>
+                  <p data-i18n="admin_toggle_upload_desc">Los usuarios pueden publicar nuevas recetas</p>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="cfg-allowRecipeUpload">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="admin-toggle-row danger-toggle">
+                <div>
+                  <strong data-i18n="admin_toggle_maintenance">🚧 Modo mantenimiento</strong>
+                  <p data-i18n="admin_toggle_maintenance_desc">Muestra página de mantenimiento a usuarios no-admin</p>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="cfg-maintenanceMode">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            <button class="admin-btn-primary" onclick="saveSiteGeneral()" data-i18n="admin_save_config">💾 Guardar configuración</button>
+          </div>
+        </div>
+
+        <!-- SITE DESIGN TAB -->
+        <div class="admin-tab" id="admin-tab-site-design">
+          <div class="admin-tab-header">
+            <h2>🎨 <span data-i18n="admin_design_tab_title">Diseño & Colores</span></h2>
+            <p data-i18n="admin_design_tab_desc">Personaliza la apariencia visual del sitio</p>
+          </div>
+          <div class="admin-two-col">
+            <div class="admin-card">
+              <h3 data-i18n="admin_colors_title">Paleta de colores</h3>
+              <div class="admin-form-group">
+                <label data-i18n="admin_color_primary">Color primario (acento)</label>
+                <div class="color-input-row">
+                  <input type="color" id="cfg-accentColor" onchange="previewColor()">
+                  <input type="text" id="cfg-accentColorHex" oninput="syncColorHex('accentColor')">
+                </div>
+              </div>
+              <div class="admin-form-group">
+                <label data-i18n="admin_color_secondary">Color secundario</label>
+                <div class="color-input-row">
+                  <input type="color" id="cfg-accentColor2" onchange="previewColor()">
+                  <input type="text" id="cfg-accentColor2Hex" oninput="syncColorHex('accentColor2')">
+                </div>
+              </div>
+              <div class="admin-form-group">
+                <label data-i18n="admin_color_gold">Color dorado (ratings)</label>
+                <div class="color-input-row">
+                  <input type="color" id="cfg-goldColor" onchange="previewColor()">
+                  <input type="text" id="cfg-goldColorHex" oninput="syncColorHex('goldColor')">
+                </div>
+              </div>
+              <div class="color-presets">
+                <p>Presets:</p>
+                <button onclick="applyColorPreset('tomato')" style="background:#C8401A">Tomate</button>
+                <button onclick="applyColorPreset('olive')" style="background:#5C7A2A">Oliva</button>
+                <button onclick="applyColorPreset('ocean')" style="background:#1A5C8C">Océano</button>
+                <button onclick="applyColorPreset('purple')" style="background:#6B2DA8">Uva</button>
+                <button onclick="applyColorPreset('chocolate')" style="background:#5C2A0A">Chocolate</button>
+              </div>
+              <button class="admin-btn-primary" onclick="saveSiteDesign()" data-i18n="admin_apply_colors">💾 Aplicar colores</button>
+            </div>
+            <div class="admin-card">
+              <h3 data-i18n="admin_preview_title">Vista previa</h3>
+              <div class="design-preview" id="designPreview">
+                <div class="dp-header">
+                  <span class="dp-logo">🍳 CookiWiki</span>
+                  <div class="dp-btns">
+                    <span class="dp-btn-ghost">Ingresar</span>
+                    <span class="dp-btn-primary" id="dp-primary">Registrarse</span>
+                  </div>
+                </div>
+                <div class="dp-hero">
+                  <div class="dp-eyebrow" id="dp-eyebrow">La enciclopedia culinaria</div>
+                  <div class="dp-title">Sabores del <em id="dp-em">mundo</em></div>
+                  <div class="dp-search">🔍 Buscar recetas...</div>
+                </div>
+                <div class="dp-card">
+                  <div class="dp-card-img" id="dp-card-img">🍝</div>
+                  <div class="dp-card-body">
+                    <div class="dp-card-title">Pasta Carbonara</div>
+                    <div class="dp-card-rating" id="dp-rating">★ 4.8</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SITE CONTENT TAB -->
+        <div class="admin-tab" id="admin-tab-site-content">
+          <div class="admin-tab-header">
+            <h2>📝 <span data-i18n="admin_content_tab_title">Editor de Contenido</span></h2>
+            <p data-i18n="admin_content_tab_desc">Edita los textos principales del sitio</p>
+          </div>
+          <div class="admin-card">
+            <h3>🏠 Página de Inicio</h3>
+            <div class="admin-form-group">
+              <label data-i18n="admin_hero_title">Título del Hero</label>
+              <input type="text" id="cfg-heroTitle">
+            </div>
+            <div class="admin-form-group">
+              <label data-i18n="admin_hero_desc">Descripción del Hero</label>
+              <textarea id="cfg-heroDesc" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="admin-card mt-1">
+            <h3>ℹ️ Página Acerca de</h3>
+            <div class="admin-form-group">
+              <label data-i18n="admin_about_mission">Texto de misión</label>
+              <textarea id="cfg-aboutMission" rows="4"></textarea>
+            </div>
+          </div>
+          <div class="admin-card mt-1">
+            <h3>🔗 Redes Sociales</h3>
+            <div class="admin-form-grid">
+              <div class="admin-form-group">
+                <label>📸 Instagram</label>
+                <input type="url" id="cfg-socialInstagram">
+              </div>
+              <div class="admin-form-group">
+                <label>🐦 Twitter / X</label>
+                <input type="url" id="cfg-socialTwitter">
+              </div>
+              <div class="admin-form-group">
+                <label>▶️ YouTube</label>
+                <input type="url" id="cfg-socialYoutube">
+              </div>
+              <div class="admin-form-group">
+                <label>🎵 TikTok</label>
+                <input type="url" id="cfg-socialTiktok">
+              </div>
+            </div>
+          </div>
+          <div class="admin-card mt-1">
+            <h3>🦶 Footer</h3>
+            <div class="admin-form-group">
+              <label data-i18n="admin_footer_text">Texto del footer</label>
+              <input type="text" id="cfg-footerText">
+            </div>
+          </div>
+          <button class="admin-btn-primary" onclick="saveSiteContent()" data-i18n="admin_save_content">💾 Guardar contenido</button>
+        </div>
+
+        <!-- SITE BANNER TAB -->
+        <div class="admin-tab" id="admin-tab-site-banner">
+          <div class="admin-tab-header">
+            <h2>📢 <span data-i18n="admin_banner_tab_title">Banner del Sitio</span></h2>
+            <p data-i18n="admin_banner_tab_desc">Muestra anuncios o avisos en la parte superior</p>
+          </div>
+          <div class="admin-card">
+            <div class="admin-toggle-row" style="margin-bottom:1.5rem">
+              <div>
+                <strong data-i18n="admin_banner_enable">Activar banner</strong>
+                <p data-i18n="admin_banner_enable_desc">Mostrar el banner en todas las páginas</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="cfg-bannerEnabled" onchange="previewBanner()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="admin-form-group">
+              <label data-i18n="admin_banner_text">Texto del banner</label>
+              <input type="text" id="cfg-bannerText" oninput="previewBanner()" placeholder="🎉 ¡Nuevo mensaje para tus usuarios!">
+            </div>
+            <div class="admin-form-group">
+              <label data-i18n="admin_banner_color">Color del banner</label>
+              <div class="color-input-row">
+                <input type="color" id="cfg-bannerColor" onchange="previewBanner()">
+                <input type="text" id="cfg-bannerColorHex" oninput="syncColorHex('bannerColor'); previewBanner()">
+              </div>
+            </div>
+            <div class="banner-live-preview" id="bannerLivePreview">
+              <div id="bannerPreviewBox" class="banner-preview-box">
+                Vista previa del banner
+              </div>
+            </div>
+            <button class="admin-btn-primary" onclick="saveSiteBanner()" data-i18n="admin_save_banner">💾 Guardar banner</button>
+          </div>
+        </div>
+
+        <!-- CATEGORIES TAB -->
+        <div class="admin-tab" id="admin-tab-site-categories">
+          <div class="admin-tab-header">
+            <h2>🏷️ <span data-i18n="admin_cat_tab_title">Gestión de Categorías</span></h2>
+            <p data-i18n="admin_cat_tab_desc">Agrega, edita u oculta categorías de recetas</p>
+          </div>
+          <div class="admin-card">
+            <div class="admin-category-list" id="adminCategoryList"></div>
+            <div class="admin-add-row">
+              <input type="text" id="newCatEmoji" data-i18n-placeholder="admin_emoji_placeholder" placeholder="Emoji" style="width:70px">
+              <input type="text" id="newCatName" data-i18n-placeholder="admin_cat_name_placeholder" placeholder="Nombre de la categoría">
+              <button class="admin-btn-primary" onclick="addCategory()" data-i18n="admin_add_cat">+ Agregar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- COUNTRIES TAB -->
+        <div class="admin-tab" id="admin-tab-site-countries">
+          <div class="admin-tab-header">
+            <h2>🌍 <span data-i18n="admin_country_tab_title">Gestión de Países</span></h2>
+            <p data-i18n="admin_country_tab_desc">Activa, desactiva o agrega países a la wiki</p>
+          </div>
+          <div class="admin-card">
+            <div class="admin-country-grid" id="adminCountryGrid"></div>
+            <div class="admin-add-row" style="margin-top:1.5rem">
+              <input type="text" id="newCountryFlag" data-i18n-placeholder="admin_country_flag_placeholder" placeholder="🏳️ Flag" style="width:70px">
+              <input type="text" id="newCountryId" data-i18n-placeholder="admin_country_id_placeholder" placeholder="Código (ej: ar)" style="width:90px">
+              <input type="text" id="newCountryName" data-i18n-placeholder="admin_country_name_placeholder" placeholder="Nombre del país">
+              <button class="admin-btn-primary" onclick="addCountry()">+ Agregar</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</main>
+    <div class="static-page-hero">
+      <div class="static-page-hero-icon">💌</div>
+      <h1 data-i18n="contact_title">Contáctanos</h1>
+      <p data-i18n="contact_subtitle">Estamos aquí para ayudarte</p>
+    </div>
+    <div class="static-page-body">
+
+      <div class="contact-grid">
+        <div class="contact-form-section">
+          <h2 data-i18n="contact_form_title">Envíanos un mensaje</h2>
+          <div class="form-group">
+            <label data-i18n="label_name">Nombre</label>
+            <input type="text" id="contactName" placeholder="Tu nombre completo">
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_email">Email</label>
+            <input type="email" id="contactEmail" placeholder="tu@email.com">
+          </div>
+          <div class="form-group">
+            <label data-i18n="contact_subject">Asunto</label>
+            <select id="contactSubject">
+              <option value="general" data-i18n="contact_sub_general">Consulta general</option>
+              <option value="recipe" data-i18n="contact_sub_recipe">Problema con receta</option>
+              <option value="account" data-i18n="contact_sub_account">Mi cuenta</option>
+              <option value="report" data-i18n="contact_sub_report">Reportar contenido</option>
+              <option value="suggestion" data-i18n="contact_sub_suggest">Sugerencia</option>
+              <option value="legal" data-i18n="contact_sub_legal">Consulta legal</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="contact_message">Mensaje</label>
+            <textarea id="contactMessage" rows="5" placeholder="Escribe tu mensaje aquí..."></textarea>
+          </div>
+          <div id="contactSuccess" class="contact-success hidden">
+            <span>✅</span> <span data-i18n="contact_sent">¡Mensaje enviado! Te responderemos en 24-48 horas.</span>
+          </div>
+          <button class="btn-primary full-width" onclick="sendContact()" data-i18n="contact_send">Enviar mensaje</button>
+        </div>
+
+        <div class="contact-info-section">
+          <h2 data-i18n="contact_info_title">Información de contacto</h2>
+
+          <div class="contact-card">
+            <span class="contact-icon">📧</span>
+            <div>
+              <h4 data-i18n="contact_email_title">Email general</h4>
+              <p>hola@cookiwiki.com</p>
+            </div>
+          </div>
+          <div class="contact-card">
+            <span class="contact-icon">🔒</span>
+            <div>
+              <h4 data-i18n="contact_privacy_title">Privacidad</h4>
+              <p>privacidad@cookiwiki.com</p>
+            </div>
+          </div>
+          <div class="contact-card">
+            <span class="contact-icon">⚖️</span>
+            <div>
+              <h4 data-i18n="contact_legal_title">Legal</h4>
+              <p>legal@cookiwiki.com</p>
+            </div>
+          </div>
+          <div class="contact-card">
+            <span class="contact-icon">💡</span>
+            <div>
+              <h4 data-i18n="contact_suggest_title">Sugerencias</h4>
+              <p>ideas@cookiwiki.com</p>
+            </div>
+          </div>
+
+          <div class="response-time">
+            <h4 data-i18n="contact_response_title">⏱ Tiempo de respuesta</h4>
+            <p data-i18n="contact_response_text">Respondemos todos los mensajes en un plazo de <strong>24 a 48 horas hábiles</strong>.</p>
+          </div>
+
+          <div class="social-links">
+            <h4 data-i18n="contact_follow_title">Síguenos</h4>
+            <div class="social-grid">
+              <a href="#" class="social-btn">📸 Instagram</a>
+              <a href="#" class="social-btn">🐦 Twitter / X</a>
+              <a href="#" class="social-btn">▶️ YouTube</a>
+              <a href="#" class="social-btn">🎵 TikTok</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-section">
+        <h2 data-i18n="faq_title">Preguntas Frecuentes</h2>
+        <div class="faq-list" id="faqList">
+          <div class="faq-item">
+            <button class="faq-q" onclick="toggleFaq(this)">
+              <span data-i18n="faq_q1">¿Cómo publico mi primera receta?</span>
+              <span class="faq-arrow">▾</span>
+            </button>
+            <div class="faq-a hidden">
+              <p data-i18n="faq_a1">Primero crea una cuenta gratuita. Luego haz clic en el botón "+ Receta" en la parte superior y sigue los 4 pasos del formulario: información básica, ingredientes, instrucciones y foto.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" onclick="toggleFaq(this)">
+              <span data-i18n="faq_q2">¿Es gratis usar CookiWiki?</span>
+              <span class="faq-arrow">▾</span>
+            </button>
+            <div class="faq-a hidden">
+              <p data-i18n="faq_a2">Sí, CookiWiki es completamente gratuito. Puedes explorar, registrarte y publicar recetas sin ningún costo.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" onclick="toggleFaq(this)">
+              <span data-i18n="faq_q3">¿Puedo publicar recetas en mi idioma?</span>
+              <span class="faq-arrow">▾</span>
+            </button>
+            <div class="faq-a hidden">
+              <p data-i18n="faq_a3">¡Absolutamente! Puedes publicar en el idioma que prefieras. La plataforma soporta 7 idiomas y detecta automáticamente el idioma de tu navegador.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" onclick="toggleFaq(this)">
+              <span data-i18n="faq_q4">¿Cómo elimino mis datos?</span>
+              <span class="faq-arrow">▾</span>
+            </button>
+            <div class="faq-a hidden">
+              <p data-i18n="faq_a4">Dado que todos los datos se guardan localmente en tu navegador, puedes eliminarlos limpiando el localStorage desde las herramientas de desarrollo del navegador o borrando los datos de sitio.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" onclick="toggleFaq(this)">
+              <span data-i18n="faq_q5">¿Puedo editar una receta que publiqué?</span>
+              <span class="faq-arrow">▾</span>
+            </button>
+            <div class="faq-a hidden">
+              <p data-i18n="faq_a5">Actualmente puedes eliminarla y volver a publicarla. En próximas versiones agregaremos edición directa de recetas publicadas.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-icon">🍳</span> <strong>CookiWiki</strong>
+      <p data-i18n="footer_tagline">La enciclopedia culinaria del mundo</p>
+    </div>
+    <div class="footer-links">
+      <a href="#" onclick="showPage('about')" data-i18n="footer_about">Acerca de</a>
+      <a href="#" onclick="showPage('contact')" data-i18n="footer_contact">Contacto</a>
+      <a href="#" onclick="showPage('privacy')" data-i18n="footer_privacy">Privacidad</a>
+      <a href="#" onclick="showPage('terms')" data-i18n="footer_terms">Términos</a>
+    </div>
+    <p class="footer-copy">© 2026 CookiWiki — <span data-i18n="footer_copy">Hecho con ❤️ por la comunidad</span></p>
+  </div>
+</footer>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('login')">✕</button>
+    <div class="modal-header">
+      <h2 data-i18n="login_title">Bienvenido de vuelta</h2>
+      <p data-i18n="login_sub">Inicia sesión para compartir tus recetas</p>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label data-i18n="label_email">Email</label>
+        <input type="email" id="loginEmail" placeholder="tu@email.com">
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_password">Contraseña</label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
+      </div>
+      <div id="loginError" class="form-error hidden"></div>
+      <button class="btn-primary full-width" onclick="doLogin()" data-i18n="btn_login">Ingresar</button>
+      <p class="modal-switch" data-i18n="login_switch">¿No tienes cuenta? <a href="#" onclick="switchModal('login','register')">Regístrate</a></p>
+      <div class="demo-hint">
+        <strong data-i18n="demo_hint">Demo:</strong> demo@cookiwiki.com / demo123
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER MODAL -->
+<div class="modal-overlay" id="modal-register">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('register')">✕</button>
+    <div class="modal-header">
+      <h2 data-i18n="register_title">Únete a la comunidad</h2>
+      <p data-i18n="register_sub">Comparte tus recetas con el mundo</p>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="label_name">Nombre</label>
+          <input type="text" id="regName" placeholder="Tu nombre">
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_username">Usuario</label>
+          <input type="text" id="regUsername" placeholder="@usuario">
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_email">Email</label>
+        <input type="email" id="regEmail" placeholder="tu@email.com">
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_password">Contraseña</label>
+        <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres">
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_country_origin">País de origen</label>
+        <select id="regCountry"></select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_bio">Bio (opcional)</label>
+        <textarea id="regBio" placeholder="Cuéntanos sobre ti y tu cocina..." rows="2"></textarea>
+      </div>
+      <div id="regError" class="form-error hidden"></div>
+      <button class="btn-primary full-width" onclick="doRegister()" data-i18n="btn_register">Crear cuenta</button>
+      <p class="modal-switch" data-i18n="register_switch">¿Ya tienes cuenta? <a href="#" onclick="switchModal('register','login')">Inicia sesión</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ADD RECIPE MODAL -->
+<div class="modal-overlay" id="modal-addRecipe">
+  <div class="modal modal-xl">
+    <button class="modal-close" onclick="closeModal('addRecipe')">✕</button>
+    <div class="modal-header">
+      <h2 data-i18n="add_recipe_title">Subir Nueva Receta</h2>
+      <p data-i18n="add_recipe_sub">Comparte tu receta con la comunidad</p>
+    </div>
+    <div class="modal-body">
+      <!-- Progress Steps -->
+      <div class="form-steps">
+        <div class="step active" id="step-indicator-1"><span>1</span><label data-i18n="step_info">Info</label></div>
+        <div class="step-line"></div>
+        <div class="step" id="step-indicator-2"><span>2</span><label data-i18n="step_ingredients">Ingredientes</label></div>
+        <div class="step-line"></div>
+        <div class="step" id="step-indicator-3"><span>3</span><label data-i18n="step_instructions">Pasos</label></div>
+        <div class="step-line"></div>
+        <div class="step" id="step-indicator-4"><span>4</span><label data-i18n="step_media">Foto</label></div>
+      </div>
+
+      <!-- Step 1: Basic Info -->
+      <div class="form-step" id="form-step-1">
+        <div class="form-group">
+          <label data-i18n="label_recipe_name">Nombre de la receta *</label>
+          <input type="text" id="rfName" placeholder="Ej: Pasta Carbonara Tradicional">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="label_country">País de origen *</label>
+            <select id="rfCountry"></select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_category">Categoría *</label>
+            <select id="rfCategory"></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="label_difficulty">Dificultad *</label>
+            <select id="rfDifficulty">
+              <option value="easy" data-i18n="diff_easy">Fácil</option>
+              <option value="medium" data-i18n="diff_medium">Medio</option>
+              <option value="hard" data-i18n="diff_hard">Difícil</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_servings">Porciones *</label>
+            <input type="number" id="rfServings" min="1" max="50" value="4">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="label_prep_time">Tiempo prep (min) *</label>
+            <input type="number" id="rfPrepTime" min="1" placeholder="15">
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_cook_time">Tiempo cocción (min) *</label>
+            <input type="number" id="rfCookTime" min="0" placeholder="30">
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_description">Descripción *</label>
+          <textarea id="rfDescription" rows="3" placeholder="Describe brevemente la receta, su origen y sabor..."></textarea>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_diet_tags">Etiquetas dietéticas</label>
+          <div class="tags-check">
+            <label><input type="checkbox" id="rfVeg" value="vegetarian"> <span data-i18n="diet_veg">Vegetariana</span></label>
+            <label><input type="checkbox" id="rfVegan" value="vegan"> <span data-i18n="diet_vegan">Vegana</span></label>
+            <label><input type="checkbox" id="rfGF" value="glutenfree"> <span data-i18n="diet_gf">Sin Gluten</span></label>
+            <label><input type="checkbox" id="rfSpicy" value="spicy"> <span data-i18n="diet_spicy">Picante</span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Ingredients -->
+      <div class="form-step hidden" id="form-step-2">
+        <div class="ingredients-builder" id="ingredientsList">
+          <div class="ingredient-row" id="ingRow-0">
+            <input type="number" placeholder="Cant." class="ing-qty" min="0" step="0.1">
+            <select class="ing-unit">
+              <option value="g">g</option><option value="kg">kg</option>
+              <option value="ml">ml</option><option value="l">l</option>
+              <option value="taza">taza</option><option value="tbsp">cda</option>
+              <option value="tsp">cdta</option><option value="pieza">pieza</option>
+              <option value="al gusto">al gusto</option>
+            </select>
+            <input type="text" placeholder="Ingrediente" class="ing-name">
+            <input type="text" placeholder="Nota (opcional)" class="ing-note">
+            <button class="ing-remove" onclick="removeIngredient(0)">✕</button>
+          </div>
+        </div>
+        <button class="btn-ghost" onclick="addIngredient()" data-i18n="add_ingredient">+ Agregar ingrediente</button>
+        <div class="form-group mt-2">
+          <label data-i18n="label_groups">Grupos de ingredientes (opcional)</label>
+          <input type="text" id="rfGroups" placeholder="Ej: Para la salsa, Para la masa...">
+        </div>
+      </div>
+
+      <!-- Step 3: Instructions -->
+      <div class="form-step hidden" id="form-step-3">
+        <div class="steps-builder" id="stepsList">
+          <div class="step-row" id="stepRow-0">
+            <div class="step-num">1</div>
+            <textarea placeholder="Describe este paso detalladamente..." rows="3" class="step-text"></textarea>
+            <input type="text" placeholder="Consejo para este paso (opcional)" class="step-tip">
+            <button class="ing-remove" onclick="removeStep(0)">✕</button>
+          </div>
+        </div>
+        <button class="btn-ghost" onclick="addStep()" data-i18n="add_step">+ Agregar paso</button>
+        <div class="form-group mt-2">
+          <label data-i18n="label_tips">Consejos adicionales</label>
+          <textarea id="rfTips" rows="2" placeholder="Trucos, variaciones, consejos de presentación..."></textarea>
+        </div>
+      </div>
+
+      <!-- Step 4: Media -->
+      <div class="form-step hidden" id="form-step-4">
+        <div class="photo-upload-area" id="photoUpload" onclick="document.getElementById('rfPhoto').click()">
+          <div class="upload-placeholder" id="uploadPlaceholder">
+            <span class="upload-icon">📸</span>
+            <p data-i18n="upload_photo">Haz clic para subir una foto de tu receta</p>
+            <span class="upload-hint" data-i18n="upload_hint">JPG, PNG, WEBP — máx 5MB</span>
+          </div>
+          <img id="photoPreview" class="photo-preview hidden" alt="Preview">
+        </div>
+        <input type="file" id="rfPhoto" accept="image/*" class="hidden" onchange="previewPhoto(this)">
+        <div class="emoji-picker-section">
+          <label data-i18n="label_emoji">O elige un emoji como portada</label>
+          <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
+        <div class="form-group mt-2">
+          <label data-i18n="label_video">Link de video (YouTube/TikTok, opcional)</label>
+          <input type="url" id="rfVideo" placeholder="https://youtube.com/...">
+        </div>
+        <div id="recipeFormError" class="form-error hidden"></div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="form-nav">
+        <button class="btn-ghost" id="btnBack" onclick="formStep(-1)" style="display:none" data-i18n="btn_back">← Atrás</button>
+        <div class="step-dots">
+          <span class="dot active" data-step="1"></span>
+          <span class="dot" data-step="2"></span>
+          <span class="dot" data-step="3"></span>
+          <span class="dot" data-step="4"></span>
+        </div>
+        <button class="btn-primary" id="btnNext" onclick="formStep(1)" data-i18n="btn_next">Siguiente →</button>
+        <button class="btn-primary hidden" id="btnSubmit" onclick="submitRecipe()" data-i18n="btn_submit">🍳 Publicar Receta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECIPE RATING MODAL -->
+<div class="modal-overlay" id="modal-rating">
+  <div class="modal modal-sm">
+    <button class="modal-close" onclick="closeModal('rating')">✕</button>
+    <div class="modal-header">
+      <h2 data-i18n="rate_title">Califica esta receta</h2>
+    </div>
+    <div class="modal-body">
+      <div class="star-rating" id="starRating">
+        <span class="star" data-val="1" onclick="setRating(1)">★</span>
+        <span class="star" data-val="2" onclick="setRating(2)">★</span>
+        <span class="star" data-val="3" onclick="setRating(3)">★</span>
+        <span class="star" data-val="4" onclick="setRating(4)">★</span>
+        <span class="star" data-val="5" onclick="setRating(5)">★</span>
+      </div>
+      <textarea id="ratingComment" rows="3" placeholder="Escribe un comentario..." style="width:100%;margin-top:1rem"></textarea>
+      <button class="btn-primary full-width mt-1" onclick="submitRating()" data-i18n="btn_submit_rating">Enviar calificación</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div class="toast" id="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
